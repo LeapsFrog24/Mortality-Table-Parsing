@@ -1,0 +1,80 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(xml2)
+library(dplyr)
+xml <- read_xml("XML/t3300.xml")
+our_table <- xml_find_all(xml,".//Table")[2]
+ys <- xml_find_all(our_table,".//Y")
+time <- xml_attr(ys,"t")
+time <- as.integer(time)
+mortality <- xml_double(ys)
+data <- data.frame(t = time, q = mortality)
+```
+
+```{r}
+parse_table_1d <- function(table){
+  ys <- xml_find_all(table,".//Y")
+  time <- as.integer(xml_attr(ys,"t"))
+  mortality <- xml_double(ys)
+  data <- data.frame(t = time, q = mortality)
+  data
+}
+parse_table_1d(our_table)
+```
+
+```{r}
+parse_table_2d <- function(table_2d){
+  ys_2d <- xml_find_all(table_2d,"./Values/Axis")
+  time_2d <- xml_attr(ys_2d,"t")
+  tester <- xml_find_all(ys_2d,"./Axis/Y")
+  timer_ed <- as.integer(xml_attr(tester, "t"))
+  mortality_2d <- xml_double(tester)
+  merged_data <- data.frame()
+  for (outer_axis in ys_2d){
+    times_2d <- xml_find_all(outer_axis,"./Axis/Y")
+    timer_2d <- as.integer(xml_attr(times_2d, "t"))
+    mortal_2d <- xml_double(times_2d)
+    age <- rep(as.integer(xml_attr(outer_axis, "t"),length(times_2d)))
+    data_2d <- data.frame(age= age, t = timer_2d, q = mortal_2d)
+    merged_data <- bind_rows(merged_data, data_2d)
+  }
+  return (merged_data)
+}
+parse_table_2d(xml)
+```
+
+```{r}
+parse_tables <- function(xml)
+{
+  tables <- xml_find_all(xml, "./Table")
+  result <- list()
+  for (table in tables) {
+    num_axes <- length(xml_find_all(table, ".//AxisDef"))
+    if (num_axes == 2) {
+      data <- parse_table_2d(table)
+      result[[length(result)+1]] <- data
+    }
+    else {
+      data <- parse_table_1d(table)
+      result[[length(result)+1]] <- data
+    }
+  }
+  return(result)
+}
+tables <- parse_tables(xml)
+tables
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
