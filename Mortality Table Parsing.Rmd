@@ -10,7 +10,7 @@ Try executing this chunk by clicking the *Run* button within the chunk or by pla
 ```{r}
 library(xml2)
 library(dplyr)
-xml <- read_xml("XML/t3300.xml")
+xml <- read_xml("t3300.xml")
 our_table <- xml_find_all(xml,".//Table")[2]
 ys <- xml_find_all(our_table,".//Y")
 time <- xml_attr(ys,"t")
