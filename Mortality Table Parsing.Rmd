@@ -3,22 +3,15 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
-
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+Read the XML using xml2
 
 ```{r}
 library(xml2)
 library(dplyr)
 xml <- read_xml("t3300.xml")
-our_table <- xml_find_all(xml,".//Table")[2]
-ys <- xml_find_all(our_table,".//Y")
-time <- xml_attr(ys,"t")
-time <- as.integer(time)
-mortality <- xml_double(ys)
-data <- data.frame(t = time, q = mortality)
+tables <- xml_find_all(xml,".//Table")
 ```
-
+for parsing tables that have a single dimension
 ```{r}
 parse_table_1d <- function(table){
   ys <- xml_find_all(table,".//Y")
@@ -27,8 +20,9 @@ parse_table_1d <- function(table){
   data <- data.frame(t = time, q = mortality)
   data
 }
-parse_table_1d(our_table)
+parse_table_1d(tables[2])
 ```
+for parsing tables that have a two dimensions
 
 ```{r}
 parse_table_2d <- function(table_2d){
@@ -48,8 +42,10 @@ parse_table_2d <- function(table_2d){
   }
   return (merged_data)
 }
-parse_table_2d(xml)
+parse_table_2d(tables[1])
 ```
+
+Determine dimension of table and parse accordingly
 
 ```{r}
 parse_tables <- function(xml)
@@ -69,12 +65,6 @@ parse_tables <- function(xml)
   }
   return(result)
 }
-tables <- parse_tables(xml)
-tables
+result <- parse_tables(xml)
+result
 ```
-
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
-
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
-
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
